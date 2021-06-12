@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 from skimage import io
+from torch._C import ComplexType
+from torch.functional import norm
 from torchvision import transforms as T
 import matplotlib.pyplot as plt
 import torch.nn.functional as func
@@ -31,18 +33,52 @@ def apply_conv(img, filter_name, filter_size=None):
 
     filter = torch.from_numpy(get_filter(filter_name, filter_size)) \
                         .type(torch.FloatTensor).to(device)
-    filtered_img = func.conv2d(gray_img, filter, padding=1)
+    filtered_img = func.conv2d(img, filter, padding=1)
     filtered_img = filtered_img.reshape(filtered_img.shape[-2:])
+
     return filtered_img.to('cpu').numpy()
+
+def normalize_image(img):
+
+    img += np.abs(np.min(img))
+    img /= np.max(img)
+    img *= 255
+
+    img = img.astype(int)
+
+    return img
+
+def fourier_transform(img, filter):
+
+
+    fft_img = torch.fft.rfftn(img)
+    fft_img_shift = torch.fft.fftshift(fft_img)
+    img2 = fft_img_shift.imag.unsqueeze(0)
+    fft_img_shift.imag = torch.from_numpy(apply_conv(img2, 'lowpass', (1,1,3,3)))
+    #fft_img[fft_img.imag < filter] = 0
+    fft_img = torch.fft.ifftshift(fft_img_shift)
+    ifft_img = torch.fft.irfftn(fft_img)
+
+    npimage = ifft_img.squeeze(0).to('cpu').detach().numpy()
+    return npimage.real
+
+
 
 #READ IMAGE
 filename = 'lena.jpg'
 img = io.imread(filename)
+plt.imshow(img)
 
 #GRAYSCALE AND CONVERT TO TENSOR
 gray_img = T.Compose([T.ToPILImage(),T.Grayscale(),
-            T.ToTensor()])(img).unsqueeze(0).to(device)
+            T.ToTensor()])(img).to(device)
+
+
+f_img = fourier_transform(gray_img, 10)
+plt.imshow(f_img, cmap='gray')
+
 
 #CONVOLUTE IMAGE USING FILTER
-new_img = apply_conv(img, 'lowpass', (1,1,3,3))
-plt.imshow(new_img)
+new_img = apply_conv(gray_img.unsqueeze_(0), 'lowpass', (1,1,3,3))
+new_img = normalize_image(new_img)
+plt.imshow(new_img, cmap='gray')
