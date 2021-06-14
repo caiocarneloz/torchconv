@@ -48,20 +48,36 @@ def normalize_image(img):
 
     return img
 
-def fourier_transform(img, filter):
-
-
-    fft_img = torch.fft.rfftn(img)
+def fourier_transform(img, filter_name):
+    
+    
+    fft_img = torch.fft.fftn(img)
     fft_img_shift = torch.fft.fftshift(fft_img)
-    img2 = fft_img_shift.imag.unsqueeze(0)
-    fft_img_shift.imag = torch.from_numpy(apply_conv(img2, 'lowpass', (1,1,3,3)))
-    #fft_img[fft_img.imag < filter] = 0
-    fft_img = torch.fft.ifftshift(fft_img_shift)
-    ifft_img = torch.fft.irfftn(fft_img)
+    img_shape = fft_img_shift.shape[-2:]
 
-    npimage = ifft_img.squeeze(0).to('cpu').detach().numpy()
+    
+    x, y = img_shape[-2]//2, img_shape[-1]//2
+
+    
+    idx = np.indices(img_shape)
+    idx_comb = zip(idx[0].flatten(), idx[1].flatten())
+    values = np.array([np.sqrt(np.power(i-x,2)+np.power(j-y,2))
+                                 for i, j in idx_comb]).reshape(img_shape)
+    values = 1/(1+np.power((values/1),2))
+
+    filter = torch.from_numpy(values).to(device).type(torch.float32)
+
+    #img2 = fft_img_shift.imag.unsqueeze(0)
+    #fft_img_shift.imag = torch.matmul(fft_img_shift.imag,filter)
+    fft_img_shift[fft_img_shift.imag > 10] = 0
+    fft_img = torch.fft.ifftshift(fft_img_shift)
+    ifft_img = torch.fft.ifftn(fft_img)
+
+    npimage = ifft_img.squeeze(0).to('cpu').numpy()
     return npimage.real
 
+f_img = fourier_transform(gray_img, 10)
+plt.imshow(f_img, cmap='gray')
 
 
 #READ IMAGE
@@ -74,8 +90,6 @@ gray_img = T.Compose([T.ToPILImage(),T.Grayscale(),
             T.ToTensor()])(img).to(device)
 
 
-f_img = fourier_transform(gray_img, 10)
-plt.imshow(f_img, cmap='gray')
 
 
 #CONVOLUTE IMAGE USING FILTER
