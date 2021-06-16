@@ -20,7 +20,7 @@ def get_filter(filter, filter_size=None):
         return np.array([[[[-1,-2,-1],[0,0,0],[1,2,1]]]])
     if filter == 'laplace':
         return np.array([[[[0,-1,0],[-1,4,-1],[0,-1,0]]]])
-    if filter == 'lowpass':
+    if filter == 'highpass':
         return np.array([[[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]]])
     if filter == 'roberts':
         return np.array([[[[1,0],[0,-1]]]])
@@ -49,13 +49,11 @@ def normalize_image(img):
     return img
 
 def fourier_transform(img, filter_name):
-    
-    
+
     fft_img = torch.fft.fftn(img)
     fft_img_shift = torch.fft.fftshift(fft_img)
     img_shape = fft_img_shift.shape[-2:]
 
-    
     x, y = img_shape[-2]//2, img_shape[-1]//2
 
     
@@ -63,14 +61,15 @@ def fourier_transform(img, filter_name):
     idx_comb = zip(idx[0].flatten(), idx[1].flatten())
     values = np.array([np.sqrt(np.power(i-x,2)+np.power(j-y,2))
                                  for i, j in idx_comb]).reshape(img_shape)
-    values = 1/(1+np.power((values/1),2))
+    values = 1/(1+np.power((values/20),2))
 
-    filter = torch.from_numpy(values).to(device).type(torch.float32)
-
-    #img2 = fft_img_shift.imag.unsqueeze(0)
-    #fft_img_shift.imag = torch.matmul(fft_img_shift.imag,filter)
-    fft_img_shift[fft_img_shift.imag > 10] = 0
-    fft_img = torch.fft.ifftshift(fft_img_shift)
+    #values[values <= 20] = 1
+    #values[values > 20] = 0
+    
+    filter = torch.from_numpy(values).unsqueeze_(0).to(device).type(torch.float32)
+    fft_img_shift *= filter
+    #fft_img_shift[fft_img_shift.imag > 0].imag = 0
+    fft_img = torch.fft.fftshift(fft_img_shift)
     ifft_img = torch.fft.ifftn(fft_img)
 
     npimage = ifft_img.squeeze(0).to('cpu').numpy()
@@ -78,7 +77,6 @@ def fourier_transform(img, filter_name):
 
 f_img = fourier_transform(gray_img, 10)
 plt.imshow(f_img, cmap='gray')
-
 
 #READ IMAGE
 filename = 'lena.jpg'
@@ -88,9 +86,7 @@ plt.imshow(img)
 #GRAYSCALE AND CONVERT TO TENSOR
 gray_img = T.Compose([T.ToPILImage(),T.Grayscale(),
             T.ToTensor()])(img).to(device)
-
-
-
+plt.imshow(gray_img.to('cpu').squeeze(0).numpy(), cmap='gray')
 
 #CONVOLUTE IMAGE USING FILTER
 new_img = apply_conv(gray_img.unsqueeze_(0), 'lowpass', (1,1,3,3))
