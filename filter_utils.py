@@ -1,3 +1,4 @@
+from os import MFD_HUGE_SHIFT
 import numpy as np
 
 
@@ -25,7 +26,7 @@ def _get_fft_filter(filter_name, threshold, img_shape):
     idx_comb = zip(idx[0].flatten(), idx[1].flatten())
     filter = np.array([np.sqrt(np.power(i-x,2)+np.power(j-y,2))
                       for i, j in idx_comb]).reshape(img_shape)
-    
+
     if filter_name == 'bandpass':
 
         filter[filter <= threshold] = 1
@@ -33,8 +34,11 @@ def _get_fft_filter(filter_name, threshold, img_shape):
 
         return filter
 
-    if filter_name == 'lowpass':
+    if filter_name == 'gausslowpass':
         return 1/(1+np.power((filter/threshold),2))
+
+    if filter_name == 'gaussbandpass':
+        return np.exp(-np.power((np.power(filter,2) - np.power(threshold,2)) / (5 * filter),2))
 
 
 def normalize_image(img):
