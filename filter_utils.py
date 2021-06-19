@@ -2,20 +2,28 @@ from os import MFD_HUGE_SHIFT
 import numpy as np
 
 
-def _get_conv_filter(filter_name, filter_size=None):
+def _get_conv_filter(filter_name):
 
-    if filter_name == 'sobel':
-        return np.array([[[[-1,-2,-1],[0,0,0],[1,2,1]]]])
+    if filter_name == 'sobel1':
+        return [[[[1,0,-1],[2,0,-2],[1,0,-1]]]]
+    if filter_name == 'sobel2':
+        return [[[[1,2,1],[0,0,0],[-1,-2,-1]]]]
+    if filter_name == 'roberts1':
+        return [[[[1,0],[0,-1]]]]
+    if filter_name == 'roberts2':
+        return [[[[0,1],[-1,0]]]]
+    if filter_name == 'prewitt1':
+        return [[[[1,0,-1],[1,0,-1],[1,0,-1]]]]
+    if filter_name == 'prewitt2':
+        return [[[[1,1,1],[0,0,0],[-1,-1,-1]]]]
     if filter_name == 'laplace':
-        return np.array([[[[0,-1,0],[-1,4,-1],[0,-1,0]]]])
+        return [[[[0,-1,0],[-1,4,-1],[0,-1,0]]]]
     if filter_name == 'highpass':
-        return np.array([[[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]]])
-    if filter_name == 'roberts':
-        return np.array([[[[1,0],[0,-1]]]])
+        return [[[[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]]]
     if filter_name == 'gauss':
-        return np.array([[[[1,4,6,4,1],[4,16,24,16,4],[6,24,36,24,6],[4,16,24,16,4],[1,4,6,4,1]]]])
+        return [[[[1,4,6,4,1],[4,16,24,16,4],[6,24,36,24,6],[4,16,24,16,4],[1,4,6,4,1]]]]
     if filter_name == 'mean':
-        return np.tile(1/9,filter_size)
+        return np.tile(1/9,(1,1,3,3))
 
 
 def _get_fft_filter(filter_name, threshold, img_shape):
@@ -38,15 +46,4 @@ def _get_fft_filter(filter_name, threshold, img_shape):
         return 1/(1+np.power((filter/threshold),2))
 
     if filter_name == 'gaussbandpass':
-        return np.exp(-np.power((np.power(filter,2) - np.power(threshold,2)) / (5 * filter),2))
-
-
-def normalize_image(img):
-
-    img += np.abs(np.min(img))
-    img /= np.max(img)
-    img *= 255
-
-    img = img.astype(int)
-
-    return img
+        return np.exp(-np.power((np.power(filter,2) - np.power(threshold,2)) / (30 * filter),2))
