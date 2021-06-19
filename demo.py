@@ -12,8 +12,7 @@ gray_img = T.Compose([T.ToPILImage(),T.Grayscale(),
 plt.imshow(gray_img.to('cpu').squeeze(0).squeeze(0).numpy(), cmap='gray')
 
 #CONVOLUTE IMAGE USING PREWITT FILTER
-filtered_img = kernel_convolution(gray_img, 'prewitt')
-filtered_img = utils.normalize_image(filtered_img)
+filtered_img = kernel_convolution(gray_img, 'sobel')
 plt.imshow(filtered_img, cmap='gray')
 
 #APPLY LOW PASS FILTER IN THE FREQUENCY DOMAIN (FOURIER)
