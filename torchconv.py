@@ -55,3 +55,19 @@ def naive_thresolding(img, thresholds):
     img[img > thresholds[-1]] = 1
 
     return img.squeeze(0).squeeze(0).to('cpu').numpy()
+
+def histogram_equalizer(img, gray_levels):
+
+    keys, counts = torch.unique(img, return_counts=True)
+    prob_dict = dict.fromkeys(torch.arange(gray_levels).tolist(), 0)
+    
+    for key, value in zip(keys.tolist(), counts.tolist()):
+        prob_dict[key] = value
+
+    counts = torch.cumsum(torch.FloatTensor(list(prob_dict.values())), dim=0).to(device)
+    counts = torch.round(((counts/counts[-1])*(gray_levels))).type(torch.int)
+
+    for key, value in zip(prob_dict.keys(), counts.tolist()):
+        img[img == key] = value
+
+    return img

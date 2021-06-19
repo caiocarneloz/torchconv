@@ -1,3 +1,4 @@
+import torch
 from os import MFD_HUGE_SHIFT
 import numpy as np
 
@@ -47,3 +48,14 @@ def _get_fft_filter(filter_name, threshold, img_shape):
 
     if filter_name == 'gaussbandpass':
         return np.exp(-np.power((np.power(filter,2) - np.power(threshold,2)) / (30 * filter),2))
+
+
+def normalize_image(img):
+
+    img += torch.abs(torch.min(img))
+    img /= torch.max(img)
+    img *= 255
+
+    img = img.type(torch.int)
+
+    return img 
