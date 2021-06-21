@@ -2,7 +2,7 @@ from skimage import io
 from torchconv import *
 
 #READ IMAGE
-file_path = 'images/bell_pepper.jpg'
+file_path = 'images/building.jpg'
 img = io.imread(file_path)
 plt.imshow(img)
 
@@ -29,4 +29,7 @@ plt.imshow(trsh_img, cmap='gray')
 
 #EQUALIZE IMAGE HISTOGRAM
 img2 = histogram_equalizer(gray_img.clone(), 255)
+plt.imshow(img2.to('cpu').squeeze(0).squeeze(0).numpy(), cmap='gray')
+
+img2 = otsu_segmentation(gray_img)
 plt.imshow(img2.to('cpu').squeeze(0).squeeze(0).numpy(), cmap='gray')

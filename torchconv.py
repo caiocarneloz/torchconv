@@ -56,10 +56,24 @@ def naive_thresolding(img, thresholds):
 
     return img.squeeze(0).squeeze(0).to('cpu').numpy()
 
+# def histogram_equalizer_(img, gray_levels):# = gray_img, 255):
+
+#     img = utils.normalize_image(img, gray_levels)
+#     hist = torch.histc(img, min=0, max=gray_levels, bins=gray_levels)
+
+#     cm = torch.cumsum(hist, dim=0).to(device)
+#     remap = torch.round(((cm/cm[-1])*(gray_levels))).type(torch.int)
+
+#     for color in range(gray_levels):
+#         img[img == color] = remap[color]
+
+#     return img
+
 def histogram_equalizer(img, gray_levels):
 
     keys, counts = torch.unique(img, return_counts=True)
-    prob_dict = dict.fromkeys(torch.arange(gray_levels).tolist(), 0)
+    #prob_dict = dict.fromkeys(torch.arange(gray_levels).tolist(), 0)
+    prob_dict = {}
     
     for key, value in zip(keys.tolist(), counts.tolist()):
         prob_dict[key] = value
@@ -69,5 +83,37 @@ def histogram_equalizer(img, gray_levels):
 
     for key, value in zip(prob_dict.keys(), counts.tolist()):
         img[img == key] = value
+
+    return img
+
+def otsu_segmentation(img):
+
+    values, idx = img.unique().sort()
+    hist = torch.histc(img, min=0, max=img.max(), bins=len(img.unique()))
+    pixels = hist.sum()
+    size = len(hist)
+    max_cost = float('inf')
+
+    for i in range(1,size):
+
+        b = torch.arange(i).to(device)
+        f = torch.arange(i,size).to(device)
+
+        wb = hist[:i].sum()/pixels
+        meanb = (hist[:i]*b).sum()/hist[:i].sum()
+        varb = (torch.pow(b - meanb, 2)*hist[:i]).sum()/hist[:i].sum()
+
+        wf = hist[i:].sum()/pixels
+        meanf = (hist[i:]*f).sum()/hist[i:].sum()
+        varf = (torch.pow(f - meanf, 2)*hist[i:]).sum()/hist[i:].sum()
+
+        cost = wb*varb+wf*varf
+
+        if cost < max_cost:
+            max_cost = cost
+            best = i
+    
+    img[img < values[best]] = 0
+    img[img > values[best]] = 1
 
     return img

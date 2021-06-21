@@ -50,11 +50,13 @@ def _get_fft_filter(filter_name, threshold, img_shape):
         return np.exp(-np.power((np.power(filter,2) - np.power(threshold,2)) / (30 * filter),2))
 
 
-def normalize_image(img):
+
+
+def normalize_image(img, gray_levels):
 
     img += torch.abs(torch.min(img))
     img /= torch.max(img)
-    img *= 255
+    img *= gray_levels
 
     img = img.type(torch.int)
 
