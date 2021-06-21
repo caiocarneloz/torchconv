@@ -1,8 +1,10 @@
 from skimage import io
 from torchconv import *
+import matplotlib.pyplot as plt
+from torchvision import transforms as T
 
 #READ IMAGE
-file_path = 'images/building.jpg'
+file_path = 'images/original/bottle-01.gif'
 img = io.imread(file_path)
 plt.imshow(img)
 
@@ -56,3 +58,8 @@ plt.imshow(trsh_img, cmap='gray')
 #THRESHOLD IMAGE BY OTSU'S METHOD
 otsu = otsu_segmentation(gray_img)
 plt.imshow(otsu.to('cpu').squeeze(0).squeeze(0).numpy(), cmap='gray')
+
+#EX3
+#IMAGE EROSION
+filtered_img = morphology(gray_img, 'erosion')
+plt.imshow(filtered_img, cmap='gray')

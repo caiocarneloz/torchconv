@@ -26,6 +26,10 @@ def _get_conv_filter(filter_name):
     if filter_name == 'mean':
         return np.tile(1/9,(1,1,3,3))
 
+def _get_morph_filter(filter_name):
+
+    if filter_name == 'erosion':
+        return [[[[1,1,1],[1,1,1],[1,1,1]]]]
 
 def _get_fft_filter(filter_name, threshold, img_shape):
 

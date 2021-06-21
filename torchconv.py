@@ -1,11 +1,7 @@
 import torch
 import numpy as np
 import filter_utils as utils
-import matplotlib.pyplot as plt
-from torch._C import ComplexType
-from torch.functional import norm
 import torch.nn.functional as func
-from torchvision import transforms as T
 
 if torch.cuda.is_available():
     device = torch.device('cuda')
@@ -117,3 +113,20 @@ def otsu_segmentation(img):
     img[img > values[best]] = 1
 
     return img
+
+
+def morphology(img, filter_name = gray_img, 'erosion'):
+
+    filter = torch.FloatTensor(utils._get_morph_filter(filter_name)).to(device)
+    filtered_img = func.conv2d(img, filter, padding=1)
+    
+    filtered_img[filtered_img == 9] = 0
+    filtered_img[filtered_img > 1] = 1
+
+    plt.imshow(filtered_img.squeeze(0).squeeze(0).to('cpu'), cmap='gray')
+
+    img = torch.abs(filtered_img - img)
+
+    img = img.reshape(img.shape[-2:])
+
+    return img.to('cpu').numpy()
