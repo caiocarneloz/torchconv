@@ -52,19 +52,6 @@ def naive_thresolding(img, thresholds):
 
     return img.squeeze(0).squeeze(0).to('cpu').numpy()
 
-# def histogram_equalizer_(img, gray_levels):# = gray_img, 255):
-
-#     img = utils.normalize_image(img, gray_levels)
-#     hist = torch.histc(img, min=0, max=gray_levels, bins=gray_levels)
-
-#     cm = torch.cumsum(hist, dim=0).to(device)
-#     remap = torch.round(((cm/cm[-1])*(gray_levels))).type(torch.int)
-
-#     for color in range(gray_levels):
-#         img[img == color] = remap[color]
-
-#     return img
-
 def histogram_equalizer(img, gray_levels):
 
     keys, counts = torch.unique(img, return_counts=True)
@@ -114,19 +101,46 @@ def otsu_segmentation(img):
 
     return img
 
+def morphology(img, mask_name, origin, op):
 
-def morphology(img, filter_name = gray_img, 'erosion'):
+    mask = torch.FloatTensor(utils._get_morph_filter(mask_name)).to(device)
+    new_img = torch.zeros(img.shape).to(device)
+    xsize = mask.shape[-2]
+    ysize = mask.shape[-1]
+    ox, oy = origin[0], origin[1]
 
-    filter = torch.FloatTensor(utils._get_morph_filter(filter_name)).to(device)
-    filtered_img = func.conv2d(img, filter, padding=1)
+    if op == 'dilation':
+        for j in range(0,img.shape[-2]-ysize):
+            for i in range(0,img.shape[-1]-xsize):
+                    if img[:,:,j:j+ysize,i:i+xsize][:,:,ox,oy] == mask[:, :, ox, oy]:
+                        new_img[:,:,j:j+ysize,i:i+xsize] = mask
+
+    if op == 'erosion':
+        for j in range(0,img.shape[-2]-ysize):
+            for i in range(0,img.shape[-1]-xsize):
+                if (img[:,:,j:j+ysize,i:i+xsize] == mask).all():
+                    new_img[:,:,j+oy,i+ox] = 1
+
+    return new_img.to('cpu')
+
+def opening(img, mask_name, origin):
+
+    img_ = morphology(img, mask_name, origin, 'erosion')
+    img_ = morphology(img_.to(device), mask_name, origin, 'dilation')
+
+    return img_.to('cpu')
+
+def closing(img, mask_name, origin):
     
-    filtered_img[filtered_img == 9] = 0
-    filtered_img[filtered_img > 1] = 1
+    img_ = morphology(img, mask_name, origin, 'dilation')
+    img_ = morphology(img_.to(device), mask_name, origin, 'erosion')
 
-    plt.imshow(filtered_img.squeeze(0).squeeze(0).to('cpu'), cmap='gray')
+    return img_.to('cpu')
 
-    img = torch.abs(filtered_img - img)
+def get_edges(img, mask_name, origin):
+    
+    img_ = morphology(img, mask_name, origin, 'dilation')
+    
+    edge = torch.abs(img_.to(device) - img)
 
-    img = img.reshape(img.shape[-2:])
-
-    return img.to('cpu').numpy()
+    return edge.to('cpu')

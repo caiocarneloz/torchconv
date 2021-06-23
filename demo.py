@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from torchvision import transforms as T
 
 #READ IMAGE
-file_path = 'images/original/bottle-01.gif'
+file_path = 'images/original/butterfly-10.gif'
 img = io.imread(file_path)
 plt.imshow(img)
 
@@ -61,5 +61,21 @@ plt.imshow(otsu.to('cpu').squeeze(0).squeeze(0).numpy(), cmap='gray')
 
 #EX3
 #IMAGE EROSION
-filtered_img = morphology(gray_img, 'erosion')
-plt.imshow(filtered_img, cmap='gray')
+filtered_img = morphology(gray_img, 'full', [1,1], 'erosion')
+plt.imshow(filtered_img.squeeze(0).squeeze(0), cmap='gray')
+
+#IMAGE DILATION
+filtered_img = morphology(gray_img, 'full', [1,1], 'dilation')
+plt.imshow(filtered_img.squeeze(0).squeeze(0), cmap='gray')
+
+#IMAGE OPENING
+filtered_img = opening(gray_img, 'full', [1,1])
+plt.imshow(filtered_img.squeeze(0).squeeze(0), cmap='gray')
+
+#IMAGE CLOSING
+filtered_img = closing(gray_img, 'full', [1,1])
+plt.imshow(filtered_img.squeeze(0).squeeze(0), cmap='gray')
+
+#IMAGE EDGE EXTRACTION
+filtered_img = get_edges(gray_img, 'full', [1,1])
+plt.imshow(filtered_img.squeeze(0).squeeze(0), cmap='gray')

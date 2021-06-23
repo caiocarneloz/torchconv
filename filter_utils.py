@@ -1,7 +1,5 @@
 import torch
-from os import MFD_HUGE_SHIFT
 import numpy as np
-
 
 def _get_conv_filter(filter_name):
 
@@ -30,6 +28,10 @@ def _get_morph_filter(filter_name):
 
     if filter_name == 'erosion':
         return [[[[1,1,1],[1,1,1],[1,1,1]]]]
+    if filter_name == 'dilation':
+        return [[[[0,1,0],[1,1,1],[0,1,0]]]]
+    if filter_name == 'full':
+        return [[[[1,1,1],[1,1,1],[1,1,1]]]]
 
 def _get_fft_filter(filter_name, threshold, img_shape):
 
@@ -52,9 +54,6 @@ def _get_fft_filter(filter_name, threshold, img_shape):
 
     if filter_name == 'gaussbandpass':
         return np.exp(-np.power((np.power(filter,2) - np.power(threshold,2)) / (30 * filter),2))
-
-
-
 
 def normalize_image(img, gray_levels):
 
