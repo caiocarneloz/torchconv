@@ -1,2 +1,2 @@
 # torchconv
-Filtering with convolutions and Fourier Transform in PyTorch
+Morphology, convolutions and Fourier Transform for image processing
